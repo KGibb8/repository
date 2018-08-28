@@ -13,6 +13,7 @@ module Repository
       base.extend ClassMethods
     end
 
+    # don't belong here...
     module InstanceMethods
       def destroy
         before_destroy_callbacks = self.class.instance_variable_get("@before_destroy_callbacks") || []
@@ -51,6 +52,8 @@ module Repository
         before_save_callbacks = self.class.instance_variable_get("@before_save_callbacks") || []
         before_save_callbacks.each { |callback| callback.(self) }
 
+        return false unless self.valid?
+
         unless success = self.persisted?
           self.class.records << self
           success = self.class.persist
@@ -71,6 +74,7 @@ module Repository
       attr_accessor :persistence_strategy
       attr_writer :records
 
+      # doesnt belong here...
       def create(params)
         record = new(params)
         return record unless record.valid?
@@ -83,66 +87,69 @@ module Repository
       end
 
       def load
-        case self.persistence_strategy
+        case self.persistence_strategy ||= :yaml
         when :yaml
           if File.exist? "#{self.name}.yml"
             self.records = YAML.load_file(self.name)
           end
         when :csv
-          csv_info = nil
           if File.exist? "#{self.name}.csv"
-            File.open("#{self.name}.csv", "r") { |file| csv_info = file.read  }
+            table = CSV::Table.new(File.open "#{self.name}.csv")
+            columns = table.first.split(", ").map(&:chomp)
 
-            column_mappings = nil
-            CSV.parse(csv_info) do |row|
-              if column_mappings.nil?
-                column_mappings = row
-              else
-                params = Hash.new
-                column_mappings.each_with_index do |column, index|
-                  params[column.to_sym] = row[index]
-                end
-                self.create(params)
-              end
+            self.records = table.by_row.map.with_index do |row, index|
+              attributes = row.split(", ").map(&:chomp)
+              params = Hash[columns.zip(attributes)]
+              self.create(params)
             end
           end
+        when :json
+          if File.exist? "#{self.name}.json"
+            json = File.open("#{self.name}.json", "r").read
+            self.records = json.map { |hash| self.create(hash) }
+          end
+        else
+          raise PersistenceError, "unsupported persistence strategy"
         end
+
+        !self.records.nil?
       end
 
       def persist
         success = nil
         case persistence_strategy ||= :yaml
         when :yaml
-          storage = if File.exists?("#{self.name}.yml")
-                      File.open("#{self.name}.yml", "w")
+          storage = if File.exist? "#{self.name}.yml"
+                      File.open "#{self.name}.yml", "w"
                     else
-                      File.new("#{self.name}.yml", "w")
+                      File.new "#{self.name}.yml", "w"
                     end
 
           success = storage.write(records.to_yaml)
         when :csv
-          storage = if File.exists?("#{self.name}.csv")
-                      File.open("#{self.name}.csv", "w")
+          storage = if File.exist? "#{self.name}.csv"
+                      File.open "#{self.name}.csv", "w"
                     else
-                      File.new("#{self.name}.csv", "w")
+                      File.new "#{self.name}.csv", "w"
                     end
 
           success = storage.write(records.to_csv)
         when :json
-          storage = if File.exists?("#{self.name}.json")
-                      File.open("#{self.name}.json", "w")
+          storage = if File.exist? "#{self.name}.json"
+                      File.open "#{self.name}.json", "w"
                     else
-                      File.new("#{self.name}.json", "w")
+                      File.new "#{self.name}.json", "w"
                     end
 
           success = storage.write(records.to_json)
         else
-          raise PersistenceError, "No persistence strategy set"
+          raise PersistenceError, "unsupported persistence strategy"
         end
 
         success
       end
 
+      # don't belong here...
       def update_all(params)
         records.each { record| record.update(params) }
       end

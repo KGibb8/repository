@@ -8,9 +8,7 @@ module Repository
     include Repository::Persistence
 
     def initialize(params = Hash.new)
-      unless params.kind_of? Hash
-        raise ArgumentError, "initialize with a hash"
-      end
+      raise ArgumentError, "initialize with a hash" unless params.kind_of? Hash
 
       params.each do |k, v|
         instance_variable_set("@#{k}", v)

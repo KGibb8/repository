@@ -15,7 +15,7 @@ module Repository
     class Callback
       attr_reader :method_name
 
-      def initialize(to_call:, method_name:)
+      def initialize(to_call, method_name)
         @to_call = to_call
         @method_name = method_name
       end
@@ -36,10 +36,8 @@ module Repository
           callbacks = instance_variable_get(variable_name)
           callbacks = instance_variable_set(variable_name, []) unless callbacks
 
-          callbacks << Callback.new(
-            to_call: block_given? ? block : Proc.new { |record| record.send(method) },
-            method_name: method
-          )
+          to_call = block_given? ? block : Proc.new { |record| record.send(method) },
+          callbacks << Callback.new(to_call, method)
         end
       end
     end

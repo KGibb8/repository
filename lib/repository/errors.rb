@@ -23,6 +23,10 @@ module Repository
       self.errors << Error.new(method, message: message)
     end
 
+    def blank?
+      self.errors.nil? || self.errors.empty?
+    end
+
     def uniq!
       self.errors = self.uniq
     end
