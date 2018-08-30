@@ -5,7 +5,9 @@ module Repository
     include Repository::Callbacks
     include Repository::Validations
     include Repository::Relation
+    include Repository::Connection
     include Repository::Persistence
+    include Repository::Query
 
     def initialize(params = Hash.new)
       raise ArgumentError, "initialize with a hash" unless params.kind_of? Hash
@@ -37,26 +39,6 @@ module Repository
       end
 
       true
-    end
-
-    class << self
-      def all
-        collection
-      end
-
-      def where(params)
-        collection.where(params)
-      end
-
-      def find_by(params)
-        collection.find_by(params)
-      end
-
-      private
-
-      def collection
-        Repository::Collection.new(records)
-      end
     end
   end
 end

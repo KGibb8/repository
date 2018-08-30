@@ -8,82 +8,19 @@ module Repository
   module Persistence
     PersistenceError = Class.new(StandardError)
 
+    PERSISTENCE_STRATEGIES = [:yaml, :csv, :psql, :json]
+
     def self.included(base)
       base.include InstanceMethods
       base.extend ClassMethods
     end
 
-    # don't belong here...
-    module InstanceMethods
-      def destroy
-        before_destroy_callbacks = self.class.instance_variable_get("@before_destroy_callbacks") || []
-        before_destroy_callbacks.each { |callback| callback.(self) }
-
-        index = self.class.records.index(self)
-
-        if self.class.records.delete_at(index)
-          after_destroy_callbacks = self.class.instance_variable_get("@after_destroy_callbacks") || []
-          after_destroy_callbacks.each { |callback| callback.(self) }
-          self.class.persist
-        end
-
-        self
-      end
-
-      def update(params)
-        before_update_callbacks = self.class.instance_variable_get("@before_update_callbacks") || []
-        before_update_callbacks.each { |callback| callback.(self) }
-
-        params.each do |k, v|
-          self.send("#{k.to_sym}", v)
-        end
-
-        self.save
-
-        after_update_callbacks = self.class.instance_variable_get("@after_update_callbacks") || []
-        after_update_callbacks.each { |callback| callback.(self) }
-
-        self
-      end
-
-      def save
-        success = nil
-
-        before_save_callbacks = self.class.instance_variable_get("@before_save_callbacks") || []
-        before_save_callbacks.each { |callback| callback.(self) }
-
-        return false unless self.valid?
-
-        unless success = self.persisted?
-          self.class.records << self
-          success = self.class.persist
-        end
-
-        after_save_callbacks = self.class.instance_variable_get("@after_save_callbacks") || []
-        after_save_callbacks.each { |callback| callback.(self) } if success
-
-        success
-      end
-
-      def persisted?
-        !self.class.records.index(self).nil?
-      end
-    end
-
     module ClassMethods
-      attr_accessor :persistence_strategy
       attr_writer :records
 
-      # doesnt belong here...
-      def create(params)
-        record = new(params)
-        return record unless record.valid?
-        @before_create_callbacks ||= []
-        @before_create_callbacks.each { |callback| callback.(record) }
-        record.save
-        @after_create_callbacks ||= []
-        @after_create_callbacks.each { |callback| callback.(record) }
-        record
+      def set_persistence_strategy(strategy)
+        raise PersistenceError, "unsupported persistence strategy" unless PERSISTENCE_STRATEGIES.include? strategy
+        self.persistence_strategy = strategy
       end
 
       def load
@@ -108,8 +45,8 @@ module Repository
             json = File.open("#{self.name}.json", "r").read
             self.records = json.map { |hash| self.create(hash) }
           end
-        else
-          raise PersistenceError, "unsupported persistence strategy"
+        when :psql
+          raise PersistenceError, "psql currently unsupported"
         end
 
         !self.records.nil?
@@ -142,25 +79,20 @@ module Repository
                     end
 
           success = storage.write(records.to_json)
-        else
-          raise PersistenceError, "unsupported persistence strategy"
+        when :psql
+          raise PersistenceError, "psql currently unsupported"
         end
 
         success
       end
 
-      # don't belong here...
-      def update_all(params)
-        records.each { record| record.update(params) }
-      end
-
-      def destroy_all
-        records.clear
-      end
-
       def records
         @records ||= []
       end
+
+      private
+
+      attr_accessor :persistence_strategy
     end
   end
 end
