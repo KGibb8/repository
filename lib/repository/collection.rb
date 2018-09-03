@@ -5,7 +5,7 @@ module Repository
     include Enumerable
 
     # .first? comes with Enumerable
-    ACCESSORS = [:second, :third, :fourth, :fifth, :sixth, :seventh, :eighth, :ninth, :tenth]
+    ACCESSORS = [:second?, :third?, :fourth?, :fifth?, :sixth?, :seventh?, :eighth?, :ninth?, :tenth?]
 
     ACCESSORS.each_with_index do |method_sym, i|
       define_method method_sym do
@@ -18,14 +18,14 @@ module Repository
     end
 
     def all
-      records
+      self.class.new(records)
     end
 
     def each
       if block_given?
-        self.records.each { |record| yield(record) }
+        self.__send__(:records).each { |record| yield(record) }
       else
-        self.records.each
+        self.__send__(:records).each
       end
     end
 
@@ -33,7 +33,7 @@ module Repository
       response = nil
       params.each do |k, v|
         if response.nil?
-          response = records.select { |record| record.send(k) == v }
+          response = self.__send__(:records).select { |record| record.send(k) == v }
         else
           response = response.select { |record| record.send(k) == v }
         end

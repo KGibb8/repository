@@ -11,7 +11,6 @@ module Repository
     PERSISTENCE_STRATEGIES = [:yaml, :csv, :psql, :json]
 
     def self.included(base)
-      base.include InstanceMethods
       base.extend ClassMethods
     end
 

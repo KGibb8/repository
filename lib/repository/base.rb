@@ -5,7 +5,6 @@ module Repository
     include Repository::Callbacks
     include Repository::Validations
     include Repository::Relation
-    include Repository::Connection
     include Repository::Persistence
     include Repository::Query
 

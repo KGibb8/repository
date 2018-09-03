@@ -17,7 +17,7 @@ module Repository
         if self.class.records.delete_at(index)
           after_destroy_callbacks = self.class.instance_variable_get("@after_destroy_callbacks") || []
           after_destroy_callbacks.each { |callback| callback.(self) }
-          self.class.persist
+          self.class.__send__(:persist)
         end
 
         self
@@ -49,7 +49,7 @@ module Repository
 
         unless success = self.persisted?
           self.class.records << self
-          success = self.class.persist
+          success = self.class.__send__(:persist)
         end
 
         after_save_callbacks = self.class.instance_variable_get("@after_save_callbacks") || []

@@ -14,7 +14,7 @@ module Repository
       end
 
       def valid?
-        self.class.perform_validations(self)
+        self.class.__send__(:perform_validations, self)
         self.errors.blank?
       end
     end
@@ -95,6 +95,8 @@ module Repository
         store_callback(to_call, attribute)
       end
 
+      private
+
       def perform_validations (record)
         @before_validation_callbacks ||= []
         @before_validation_callbacks.each { |callback| callback.(record) }
@@ -111,8 +113,6 @@ module Repository
         @after_validation_callbacks ||= []
         @after_validation_callbacks.each { |callback| callback.call(record) }
       end
-
-      private
 
       def setup_callbacks
         @validation_callbacks ||= []
