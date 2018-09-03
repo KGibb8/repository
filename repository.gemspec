@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Kieran"]
   spec.email         = ["kieran@tenthousandthings.org.uk"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
+  spec.summary       = ""
+  spec.description   = ""
   spec.homepage      = "TODO: Put your gem's website or public repo URL here."
   spec.license       = "MIT"
 
@@ -33,4 +33,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.15"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "pg"
+  spec.add_development_dependency "pry-byebug"
 end
