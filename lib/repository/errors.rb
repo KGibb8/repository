@@ -20,7 +20,7 @@ module Repository
     end
 
     def add(method, message)
-      self.errors << Error.new(method, message: message)
+      self.errors << Error.new(method, message)
     end
 
     def blank?
@@ -32,13 +32,9 @@ module Repository
     end
 
     def uniq
-      errors.sort_by {|a, b| a.method <=> b.method }
-             .reject
-             .with_index(1) do |error, i|
-               next_error = @errors[i]
-               !next_error.nil? &&
-                 error.method != next_error.method
-             end
+      self.errors.sort {|a, b| a.method.to_s <=> b.method.to_s }
+                 .reject
+                 .with_index(1) { |error, i| !@errors[i].nil? && error.method != @errors[i].method }
     end
 
     private
@@ -49,7 +45,7 @@ module Repository
   class Error
     attr_reader :method, :message
 
-    def initialize(method, message:)
+    def initialize(method, message)
       @method = method
       @message = message
     end
