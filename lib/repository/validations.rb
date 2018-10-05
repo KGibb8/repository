@@ -27,36 +27,38 @@ module Repository
         store_callback(to_call, method)
       end
 
-      def validates(attribute, options = {})
-        options.each do |option, value|
-          raise ArgumentError, "unknown validation" unless VALIDATES_OPTIONS.include? option
+      def validates(*attributes, **options)
+        attributes.each do |attribute|
+          options.each do |option, value|
+            raise ArgumentError, "unknown validation" unless VALIDATES_OPTIONS.include? option
 
-          to_call = Proc.new do |record|
-            case option
-            when :presence
-              if record.send(attribute).nil?
-                record.errors.add(attribute, "#{attribute}")
-              end
-            when :uniqueness
-              attribute_value = record.send(attribute)
-              unless attribute_value.nil?
-                others = self.all.where(option => attribute_value)
-                unless others.select { |r| r.object_id == record.object_id }.empty?
-                  record.errors.add(attribute, "#{attribute} is not unique")
+            to_call = Proc.new do |record|
+              case option
+              when :presence
+                if record.send(attribute).nil?
+                  record.errors.add(attribute, "#{attribute}")
                 end
-              end
-            when :format
-              if regex = option[:with]
-                unless record.send(attribute).match(regex)
-                  record.errors.add(attribute, "#{attribute} must match format #{regex}")
+              when :uniqueness
+                attribute_value = record.send(attribute)
+                unless attribute_value.nil?
+                  others = self.all.where(option => attribute_value)
+                  unless others.select { |r| r.object_id == record.object_id }.empty?
+                    record.errors.add(attribute, "#{attribute} is not unique")
+                  end
                 end
-              else
-                raise ArgumentError, "provide a hash with a format scope"
+              when :format
+                if regex = option[:format][:with]
+                  unless record.send(attribute).match(regex)
+                    record.errors.add(attribute, "#{attribute} must match format #{regex}")
+                  end
+                else
+                  raise ArgumentError, "you must determine the format's scope"
+                end
               end
             end
-          end
 
-          store_callback(to_call, attribute)
+            store_callback(to_call, attribute)
+          end
         end
       end
 
@@ -104,9 +106,7 @@ module Repository
         @errors = Repository::Errors.new(record)
 
         setup_callbacks
-        @validation_callbacks.each do |callback|
-          callback.(record)
-        end
+        @validation_callbacks.each { |callback| callback.(record) }
 
         @errors.uniq!
 
