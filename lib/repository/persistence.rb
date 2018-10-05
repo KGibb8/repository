@@ -41,7 +41,7 @@ module Repository
           end
         when :json
           if File.exist? "#{self.name}.json"
-            json = File.open("#{self.name}.json", "r").read
+            json = JSON.parse(File.open("#{self.name}.json", "r").read)
             self.records = json.map { |hash| self.create(hash) }
           end
         when :psql
@@ -77,7 +77,7 @@ module Repository
                       File.new "#{self.name}.json", "w"
                     end
 
-          success = storage.write(records.to_json)
+          success = storage.write(JSON.dump(records))
         when :psql
           raise PersistenceError, "psql currently unsupported"
         end
