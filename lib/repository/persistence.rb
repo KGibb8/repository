@@ -15,6 +15,7 @@ module Repository
     end
 
     module ClassMethods
+      attr_reader :persistence_strategy
       attr_writer :records
 
       def set_persistence_strategy(strategy)
@@ -25,12 +26,12 @@ module Repository
       def load
         case self.persistence_strategy ||= :yaml
         when :yaml
-          if File.exist? "#{self.name}.yml"
-            self.records = YAML.load_file(self.name)
+          if File.exist? "#{self.name.underscore}.yml"
+            self.records = YAML.load_file("#{self.name.underscore}.yml")
           end
         when :csv
-          if File.exist? "#{self.name}.csv"
-            table = CSV::Table.new(File.open "#{self.name}.csv")
+          if File.exist? "#{self.name.underscore}.csv"
+            table = CSV::Table.new(File.open "#{self.name.underscore}.csv")
             columns = table.first.split(", ").map(&:chomp)
 
             self.records = table.by_row.map.with_index do |row, index|
@@ -40,8 +41,8 @@ module Repository
             end
           end
         when :json
-          if File.exist? "#{self.name}.json"
-            json = JSON.parse(File.open("#{self.name}.json", "r").read)
+          if File.exist? "#{self.name.underscore}.json"
+            json = JSON.parse(File.open("#{self.name.underscore}.json", "r").read)
             self.records = json.map { |hash| self.create(hash) }
           end
         when :psql
@@ -55,26 +56,26 @@ module Repository
         success = nil
         case persistence_strategy ||= :yaml
         when :yaml
-          storage = if File.exist? "#{self.name}.yml"
-                      File.open "#{self.name}.yml", "w"
+          storage = if File.exist? "#{self.name.underscore}.yml"
+                      File.open "#{self.name.underscore}.yml", "w"
                     else
-                      File.new "#{self.name}.yml", "w"
+                      File.new "#{self.name.underscore}.yml", "w"
                     end
 
           success = storage.write(records.to_yaml)
         when :csv
-          storage = if File.exist? "#{self.name}.csv"
-                      File.open "#{self.name}.csv", "w"
+          storage = if File.exist? "#{self.name.underscore}.csv"
+                      File.open "#{self.name.underscore}.csv", "w"
                     else
-                      File.new "#{self.name}.csv", "w"
+                      File.new "#{self.name.underscore}.csv", "w"
                     end
 
           success = storage.write(records.to_csv)
         when :json
-          storage = if File.exist? "#{self.name}.json"
-                      File.open "#{self.name}.json", "w"
+          storage = if File.exist? "#{self.name.underscore}.json"
+                      File.open "#{self.name.underscore}.json", "w"
                     else
-                      File.new "#{self.name}.json", "w"
+                      File.new "#{self.name.underscore}.json", "w"
                     end
 
           success = storage.write(JSON.dump(records))
@@ -91,7 +92,7 @@ module Repository
 
       private
 
-      attr_accessor :persistence_strategy
+      attr_writer :persistence_strategy
     end
   end
 end

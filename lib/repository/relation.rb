@@ -13,7 +13,7 @@ module Repository
 
         self.__send__(:define_method, association) do
           association_class = Object.const_get(association_class_name)
-          Repository::Collection.new(association_class.where(primary_association_name.to_sym => self))
+          association_class.where(primary_association_name.to_sym => self)
         end
       end
 

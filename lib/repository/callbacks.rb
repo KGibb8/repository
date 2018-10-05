@@ -36,7 +36,7 @@ module Repository
           callbacks = instance_variable_get(variable_name)
           callbacks = instance_variable_set(variable_name, []) unless callbacks
 
-          to_call = block_given? ? block : Proc.new { |record| record.send(method) },
+          to_call = block_given? ? block : Proc.new { |record| record.send(method) }
           callbacks << Callback.new(to_call, method)
         end
       end

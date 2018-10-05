@@ -79,6 +79,10 @@ module Repository
         collection
       end
 
+      def first
+        self.all.first
+      end
+
       def where(params)
         collection.where(params)
       end

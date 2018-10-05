@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 module Repository
-  class Collection
+  class Collection # < Array
     include Enumerable
 
-    # .first? comes with Enumerable
-    ACCESSORS = [:second?, :third?, :fourth?, :fifth?, :sixth?, :seventh?, :eighth?, :ninth?, :tenth?]
+    ACCESSORS = [:first, :second, :third, :fourth, :fifth, :sixth, :seventh, :eighth, :ninth, :tenth]
 
     ACCESSORS.each_with_index do |method_sym, i|
       define_method method_sym do
-        self[i]
+        self.__send__(:records)[i]
       end
     end
 
@@ -19,6 +18,10 @@ module Repository
 
     def all
       self.class.new(records)
+    end
+
+    def [](i)
+      self.__send__(:records)[i]
     end
 
     def each
@@ -43,6 +46,10 @@ module Repository
 
     def find_by(params)
       where(params).first
+    end
+
+    def <<(obj)
+      self.__send__(:records) << obj
     end
 
     private
